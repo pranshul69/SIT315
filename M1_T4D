@@ -1,0 +1,85 @@
+// Set pins for PIR sensors
+int pir1 = 2;
+int pir2 = 3;
+int pir3 = 4;
+
+// Set pins for LEDs
+int led1 = 5;
+int led2 = 6;
+int led3 = 9;
+
+// Initialize variables
+volatile int pir1_status = LOW;
+volatile int pir2_status = LOW;
+volatile int pir3_status = LOW;
+volatile int timer_counter = 0;
+
+void setup() {
+  // Set pin modes
+  Serial.begin(9600);
+  pinMode(pir1, INPUT);
+  pinMode(pir2, INPUT);
+  pinMode(pir3, INPUT);
+  pinMode(led1, OUTPUT);
+  pinMode(led2, OUTPUT);
+
+  // Set timer to interrupt every 100ms
+  TCCR1A = 0;
+  TCCR1B = 0;
+  TCNT1 = 0;
+  OCR1A = 1562; // 100ms
+  TCCR1B |= (1 << WGM12);
+  TCCR1B |= (1 << CS12) | (1 << CS10);
+  TIMSK1 |= (1 << OCIE1A);
+}
+
+void loop() {
+  // Do nothing in loop
+}
+
+ISR(TIMER1_COMPA_vect) {
+  // Increment timer counter
+  timer_counter++;
+
+  // Read PIR sensor status
+  pir1_status = digitalRead(pir1);
+  pir2_status = digitalRead(pir2);
+  pir3_status = digitalRead(pir3);
+
+  // Check if any PIR sensor is triggered
+if (pir1_status) {
+// Turn on LED 1
+digitalWrite(led1, HIGH);
+Serial.println("Motion detected by PIR Sensor 1");
+// Turn off LED 2 and 3
+digitalWrite(led2, LOW);
+digitalWrite(led3, LOW);
+
+} else if (pir2_status) {
+// Turn on LED 2
+digitalWrite(led2, HIGH);
+Serial.println("Motion detected by PIR Sensor 2");
+// Turn off LED 1 and 3
+digitalWrite(led1, LOW);
+digitalWrite(led3, LOW);
+
+} else if (pir3_status) {
+// Turn on LED 3
+digitalWrite(led3, HIGH);
+Serial.println("Motion detected by PIR Sensor 3");
+// Turn off LED 1 and 2
+digitalWrite(led1, LOW);
+digitalWrite(led2, LOW);
+  } else {
+// Turn off all LEDs
+digitalWrite(led1, LOW);
+digitalWrite(led2, LOW);
+digitalWrite(led3, LOW);
+Serial.println("No Motion detected");
+   // Blink LED 2 every 1 second
+if (timer_counter >= 10) {
+  timer_counter = 0;
+  digitalWrite(led2, !digitalRead(led2)); 
+}
+}
+}
